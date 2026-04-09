@@ -260,14 +260,14 @@
             const u = document.getElementById('username').value.toLowerCase();
             const p = document.getElementById('password').value;
 
-            if ((u === 'gadkari' || u === 'worker') && p === 'mango2026') {
+            if ((u === 'Gadkari' || u === 'worker') && p === 'mango2026') {
                 currentUser = u;
                 document.getElementById('login-page').style.display = 'none';
                 document.getElementById('dashboard').style.display = 'block';
                 document.getElementById('user-role-text').innerText = u.toUpperCase() + " ACCESS";
 
                 // If owner, hide edit buttons (based on your original logic)
-                if(u === 'owner') {
+                if(u === 'Gadkari') {
                     document.querySelectorAll('.worker-only').forEach(b => b.style.display = 'none');
                 }
                 
