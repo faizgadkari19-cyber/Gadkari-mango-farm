@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gadkari Mango Farm | Management Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --secondary: #ffa000;
+            --bg: #f4f7f6;
+            --white: #ffffff;
+            --text: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* --- Login Page --- */
+        #login-page {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #2e7d32, #8bc34a);
+            padding: 20px;
+        }
+
+        .login-card {
+            background: var(--white);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        /* --- Dashboard Layout --- */
+        #dashboard { display: none; }
+
+        .mobile-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary);
+            color: white;
+            padding: 15px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .menu-icon {
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .sidebar {
+            width: 280px;
+            height: 100vh;
+            background: #1b5e20;
+            position: fixed;
+            left: -280px;
+            top: 0;
+            transition: 0.3s;
+            z-index: 999;
+            color: white;
+            padding-top: 60px;
+        }
+
+        .sidebar.active { left: 0; }
+
+        .nav-item {
+            padding: 20px 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+        }
+
+        .nav-item:hover { background: rgba(255,255,255,0.1); }
+        .nav-item.active { background: var(--secondary); color: black; font-weight: bold; }
+
+        .main-content {
+            padding: 15px;
+            transition: 0.3s;
+        }
+
+        @media (min-width: 768px) {
+            .sidebar { left: 0; }
+            .main-content { margin-left: 280px; }
+            .mobile-nav { display: none; }
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .hidden { display: none; }
+
+        .edit-btn {
+            background: var(--secondary);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            float: right;
+            cursor: pointer;
+        }
+
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 998;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
+    <div id="login-page">
+        <div class="login-card">
+            <h1 style="color: var(--primary); margin: 0;">Gadkari Farm</h1>
+            <p style="color: #666; margin-bottom: 25px;">Management Portal</p>
+            <input type="text" id="username" placeholder="Username (owner/worker)">
+            <input type="password" id="password" placeholder="Password (admin123)">
+            <button class="btn-login" onclick="handleLogin()">Sign In</button>
+        </div>
+    </div>
+
+    <div id="dashboard">
+        <div class="mobile-nav">
+            <div class="menu-icon" onclick="toggleMenu()">☰</div>
+            <div id="mobile-title">Home</div>
+            <div>🥭</div>
+        </div>
+
+        <div class="sidebar" id="sidebar">
+            <div style="padding: 20px; text-align: center; border-bottom: 2px solid var(--secondary);">
+                <h2 style="margin: 0;">Gadkari Farm</h2>
+                <small id="user-role-text"></small>
+            </div>
+            <div class="nav-item active" onclick="showSection('home', 'Home')">📊 1. Home</div>
+            <div class="nav-item" onclick="showSection('stock', 'Stock')">🌳 2. Stock</div>
+            <div class="nav-item" onclick="showSection('sale', 'Sales')">💰 3. Sales</div>
+            <div class="nav-item" onclick="showSection('requirement', 'Needs')">📋 4. Requirements</div>
+            <div class="nav-item" style="color: #ff5252; margin-top: 20px;" onclick="location.reload()">Logout</div>
+        </div>
+
+        <div class="main-content">
+            <div id="home" class="section">
+                <div class="card">
+                    <h3>Production Overview</h3>
+                    <canvas id="pieChart"></canvas>
+                </div>
+                <div class="card">
+                    <h3>Monthly Yield</h3>
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+
+            <div id="stock" class="section hidden">
+                <div class="card">
+                    <button class="edit-btn worker-only" onclick="editData('trees')">Edit</button>
+                    <h4>Tree Inventory</h4>
+                    <p>Total Mango Trees: <b id="val-trees">240</b></p>
+                </div>
+                <div class="card">
+                    <button class="edit-btn worker-only" onclick="editData('produced')">Edit</button>
+                    <h4>Production</h4>
+                    <p>Dozens Produced: <b id="val-produced">1,500</b></p>
+                    <p>Dozens on the Way: <b id="val-otw">450</b></p>
+                </div>
+            </div>
+
+            <div id="sale" class="section hidden">
+                <div class="card">
+                    <button class="edit-btn worker-only" onclick="addSale()">+ New Sale</button>
+                    <h3>Sales History</h3>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr><th>Customer</th><th>Phone</th><th>Dozens</th><th>Rate (₹)</th></tr>
+                            </thead>
+                            <tbody id="sales-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="requirement" class="section hidden">
+                <div class="card">
+                    <button class="edit-btn worker-only" onclick="editData('workers')">Edit</button>
+                    <h4>Labor Force</h4>
+                    <p>Active Workers: <b id="val-workers">12</b></p>
+                </div>
+                <div class="card">
+                    <button class="edit-btn worker-only" onclick="editData('fert')">Edit</button>
+                    <h4>Farm Maintenance</h4>
+                    <p>Fertilization Rounds: <b id="val-fert">5</b></p>
+                    <p>Available Space (New Trees): <b id="val-space">85</b></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = '';
+        const salesData = [
+            {n: "Amit Rao", p: "9822012345", d: 20, r: 450},
+            {n: "Sunita G.", p: "9422055667", d: 15, r: 500}
+        ];
+
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+            const overlay = document.getElementById('overlay');
+            overlay.style.display = (overlay.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function handleLogin() {
+            const u = document.getElementById('username').value.toLowerCase();
+            const p = document.getElementById('password').value;
+
+            if ((u === 'owner' || u === 'worker') && p === 'admin123') {
+                currentUser = u;
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                document.getElementById('user-role-text').innerText = u.toUpperCase() + " ACCESS";
+
+                // If owner, hide edit buttons (based on your original logic)
+                if(u === 'owner') {
+                    document.querySelectorAll('.worker-only').forEach(b => b.style.display = 'none');
+                }
+                
+                initCharts();
+                renderSales();
+            } else {
+                alert("Incorrect username or password!");
+            }
+        }
+
+        function showSection(id, title) {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            // Highlight active nav item
+            const items = document.querySelectorAll('.nav-item');
+            items.forEach(item => {
+                if(item.innerText.includes(title)) item.classList.add('active');
+            });
+
+            document.getElementById('mobile-title').innerText = title;
+            if (window.innerWidth < 768) toggleMenu();
+        }
+
+        function renderSales() {
+            const html = salesData.map(s => `<tr><td>${s.n}</td><td>${s.p}</td><td>${s.d}</td><td>₹${s.r}</td></tr>`).join('');
+            document.getElementById('sales-list').innerHTML = html;
+        }
+
+        function editData(type) {
+            const val = prompt("Enter new value for " + type + ":");
+            if(val) document.getElementById('val-'+type).innerText = val;
+        }
+
+        function addSale() {
+            const n = prompt("Customer Name:");
+            const p = prompt("Phone Number:");
+            const d = prompt("Dozens:");
+            const r = prompt("Rate per Dozen:");
+            if(n && d) {
+                salesData.push({n, p, d, r});
+                renderSales();
+            }
+        }
+
+        function initCharts() {
+            new Chart(document.getElementById('pieChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Stock', 'Sold', 'Ready'],
+                    datasets: [{
+                        data: [40, 35, 25],
+                        backgroundColor: ['#ffa000', '#2e7d32', '#81c784']
+                    }]
+                },
+                options: { responsive: true }
+            });
+
+            new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['April', 'May', 'June'],
+                    datasets: [{
+                        label: 'Production (Dozens)',
+                        data: [300, 850, 400],
+                        backgroundColor: '#2e7d32'
+                    }]
+                }
+            });
+        }
+    </script>
+</body>
+</html>
